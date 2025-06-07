@@ -1,0 +1,18 @@
+name: fin-agent
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - ollama
+  - gradio
+  - langchain-core
+  - langchain
+  - selenium
+  - yfinance
+  - plotly
+  - matplotlib
+  - langchain-community
+  - sentence-transformers
+  - faiss-gpu
+prefix: /home/neidhardt/miniconda3/envs/fin-agent

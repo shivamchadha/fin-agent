@@ -9,7 +9,9 @@ import matplotlib.pyplot as plt
 from io import BytesIO
 
 market = MarketData()
-
+# yf.set_config(
+#     proxy = None
+# )
 
 def fetch_financial_data(ticker, start_date, end_date):
     """Fetch historical price data and fundamental metrics for a given ticker."""
@@ -146,6 +148,7 @@ def generate_financial_summary(stats_df):
 
 def generate_plots(data, company, start_date, end_date):
     # Convert dates and filter data
+    data.index = pd.to_datetime(data.index)
     start_date = pd.to_datetime(start_date)
     end_date = pd.to_datetime(end_date)
     mask = (data.index >= start_date) & (data.index <= end_date)
@@ -180,19 +183,19 @@ def fetch_data(company: str, start_date: str, end_date: str):
     ticker = market.company_mapping[company]
     latest_ticker = ticker  # Store this globally so it can be used for news fetching.
     data,fundamentals = fetch_financial_data(ticker, start_date, end_date)
-    if data is None or data.empty:
-        return None, None, "No data found for the specified date range."
-    
-    stats = calculate_statistics(data,fundamentals)
-    financial_summary = generate_financial_summary(stats)
-    financial_summary_context = financial_summary  # Update global context.
-    
-    plot = generate_plots(data, company,start_date, end_date)
-  
+    if data is not  None or not data.empty:
+        stats = calculate_statistics(data,fundamentals)
+        financial_summary = generate_financial_summary(stats)
+        financial_summary_context = financial_summary  # Update global context.
+        plot = generate_plots(data, company,start_date, end_date)
+    else:
+        stats = pd.DataFrame(columns=["Metric", "Value"])
+        financial_summary = "No financial data available for this company."
+        plot = np.zeros((100, 100, 3), dtype=np.uint8)  # Placeholder image  
     raw_news = search_ddg_news(f"{company} financial news", max_results=5)
     news_text = "\n".join([
         f"Title:{article['title']}\n url:({result['url']}): \n text:{article['text'][:500]}"
-        for result in raw_news if (article := extract_article_text(result['url']))])
+        for result in raw_news if (article := extract_article_text(result))])
     
     news_summary = summarize_news(news_text)
 

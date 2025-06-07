@@ -1,10 +1,10 @@
 import json
 from langchain_community.vectorstores import FAISS
-from langchain_community.embeddings import SentenceTransformerEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain.chains import RetrievalQA
 from utils.ollama import model
 
-embeddings = SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
+embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 vector_db = FAISS.load_local("vector_db.index", embeddings, allow_dangerous_deserialization=True)
 retriever = vector_db.as_retriever(search_kwargs={"k": 5})
 

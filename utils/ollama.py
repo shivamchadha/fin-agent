@@ -4,43 +4,8 @@ from typing import Optional, List
 import json
 import requests
 import logging
-import signal
-import atexit
-import subprocess
-import sys
-import time
 
 logger = logging.getLogger(__name__)
-
-_ollama_proc = None
-_ollama_started = False
-
-def start_ollama():
-    global _ollama_proc, _ollama_started
-    if not _ollama_started:
-        _ollama_proc = subprocess.Popen(['ollama', 'serve'],
-                                        stdout=subprocess.DEVNULL,
-                                        stderr=subprocess.DEVNULL)
-        time.sleep(2)
-        _ollama_started = True
-
-def stop_ollama():
-    global _ollama_proc
-    if _ollama_proc and _ollama_proc.poll() is None:
-        _ollama_proc.terminate()
-        try:
-            _ollama_proc.wait(timeout=5)
-        except subprocess.TimeoutExpired:
-            _ollama_proc.kill()
-
-def _handle_exit(signum=None, frame=None):
-    stop_ollama()
-    sys.exit(0)
-
-atexit.register(stop_ollama)
-signal.signal(signal.SIGINT, _handle_exit)
-signal.signal(signal.SIGTERM, _handle_exit)
-
 
 class OllamaLLM(LLM):
     """Custom LLM wrapper for Ollama models."""
@@ -59,7 +24,6 @@ class OllamaLLM(LLM):
 
     def _call(self, prompt: str, stop: Optional[List[str]] = None) -> str:
         """Execute the LLM query with proper error handling and streaming."""
-        start_ollama()
         
         payload = {
             "model": self.model_name,
@@ -74,7 +38,7 @@ class OllamaLLM(LLM):
                 self.base_url,
                 json={k: v for k, v in payload.items() if v is not None},
                 headers={"Content-Type": "application/json"},
-                timeout=60
+                timeout=120
             )
             response.raise_for_status()
 

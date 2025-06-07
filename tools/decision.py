@@ -36,8 +36,8 @@ def select_tools(query: str) -> ToolDecision:
     """
     Direct model invocation for tool selection with enhanced prompt
     """
-    prompt = f"""Analyze this query and select appropriate tools:
-    
+    prompt = f"""Analyze this query and select appropriate tools, only use the tool if you believe you cannot answer the question directly.
+    Return optimized query for retrieval if needed.
     Available Tools:
     1. financial_retriever - Internal financial documents (fundamentals, historical data)
     2. web_search - Company news, recent events, or unknown information
@@ -46,7 +46,8 @@ def select_tools(query: str) -> ToolDecision:
     {{
         "needs_retrieval": bool,
         "tools_needed": ["financial_retriever", "web_search"],
-        "modified_query": "optimized query or original",
+        "rag_query": "optimized query or original",
+        "search_query": "query for web search or original",
         "reasoning": "step-by-step logic"
     }}
     
@@ -55,6 +56,7 @@ def select_tools(query: str) -> ToolDecision:
     try:
         response = model.invoke(prompt)
         decision = json.loads(response.strip())
+        print("Tool selection decision:", decision)  # Debug output
         return ToolDecision(**decision)
     except Exception as e:
         return ToolDecision(
