@@ -2,18 +2,27 @@ from newspaper import Article,Config
 from duckduckgo_search import DDGS
 from datetime import datetime
 import dateutil.parser
+from functools import lru_cache
+import time
 
 config = Config()
-config.browser_user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36'
+config.browser_user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
 config.request_timeout = 15
 
+
+ddgs = DDGS( timeout=60)
+
+@lru_cache(maxsize=128)
 def search_ddg(query, max_results=10):
-    results = DDGS().text(query, max_results=max_results)
+    time.sleep(30)
+    results = ddgs.text(query, max_results=max_results)
     return results
 
+@lru_cache(maxsize=128)
 def search_ddg_news(query, max_results=10):
+    time.sleep(30)
     try:
-        results = DDGS().news(keywords=query, region="in-en", safesearch="off", timelimit="3d", max_results=max_results)
+        results = ddgs.news(keywords=query, region="in-en", safesearch="off", timelimit="w", max_results=max_results)
     except Exception as e:
         print(f"News search error: {str(e)}")
         return search_ddg(query + " news", max_results)

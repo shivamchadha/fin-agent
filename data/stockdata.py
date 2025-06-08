@@ -7,12 +7,12 @@ from utils.summarization import summarize_news
 import plotly.graph_objects as go
 import matplotlib.pyplot as plt
 from io import BytesIO
+from functools import lru_cache
+
 
 market = MarketData()
-# yf.set_config(
-#     proxy = None
-# )
 
+@lru_cache(maxsize=128)
 def fetch_financial_data(ticker, start_date, end_date):
     """Fetch historical price data and fundamental metrics for a given ticker."""
     try:
@@ -84,7 +84,6 @@ def calculate_statistics(hist_data, fundamentals):
     # Remove None/NaN values
     return pd.DataFrame([(k, float(v)) for k, v in stats.items() if v is not None and not pd.isna(v)],columns=["Metric", "Value"])
 
-
 def generate_financial_summary(stats_df):
     """Generate a formatted financial summary from calculated statistics."""
     if stats_df.empty:
@@ -144,8 +143,6 @@ def generate_financial_summary(stats_df):
     
     return "\n\n".join(summary)
 
-
-
 def generate_plots(data, company, start_date, end_date):
     # Convert dates and filter data
     data.index = pd.to_datetime(data.index)
@@ -176,18 +173,19 @@ def generate_plots(data, company, start_date, end_date):
     
     return img_np
 
-    
-
 def fetch_data(company: str, start_date: str, end_date: str):
     global financial_summary_context, latest_ticker
     ticker = market.company_mapping[company]
     latest_ticker = ticker  # Store this globally so it can be used for news fetching.
-    data,fundamentals = fetch_financial_data(ticker, start_date, end_date)
-    if data is not  None or not data.empty:
-        stats = calculate_statistics(data,fundamentals)
+    
+    # Fetch data with caching
+    data, fundamentals = fetch_financial_data(ticker, start_date, end_date)
+    
+    if data is not None or not data.empty:
+        stats = calculate_statistics(data, fundamentals)
         financial_summary = generate_financial_summary(stats)
         financial_summary_context = financial_summary  # Update global context.
-        plot = generate_plots(data, company,start_date, end_date)
+        plot = generate_plots(data, company, start_date, end_date)
     else:
         stats = pd.DataFrame(columns=["Metric", "Value"])
         financial_summary = "No financial data available for this company."
@@ -199,8 +197,4 @@ def fetch_data(company: str, start_date: str, end_date: str):
     
     news_summary = summarize_news(news_text)
 
-    return stats, plot, news_summary if news_summary else "No recent news found",{"finance":financial_summary,"news":news_text}
-
-
-
-
+    return stats, plot, news_summary if news_summary else "No recent news found", {"finance": financial_summary, "news": news_text}
