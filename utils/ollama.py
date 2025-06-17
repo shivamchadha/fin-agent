@@ -15,6 +15,7 @@ class OllamaLLM(LLM):
                          description="API endpoint URL")
     temperature: float = Field(default=0.2, ge=0, le=1, 
                               description="Model temperature")
+    max_tokens: int = Field(default=1000, ge=1)
     session: requests.Session = Field(default_factory=requests.Session, 
                                      exclude=True)
 
@@ -30,7 +31,10 @@ class OllamaLLM(LLM):
             "prompt": prompt,
             "temperature": self.temperature,
             "stream": False,
-            "options": {"stop": stop} if stop else None
+             "options": {
+                "stop": stop if stop else [],
+                "num_predict": self.max_tokens  # Token-level limiting
+            }
         }
 
         try:
@@ -38,7 +42,7 @@ class OllamaLLM(LLM):
                 self.base_url,
                 json={k: v for k, v in payload.items() if v is not None},
                 headers={"Content-Type": "application/json"},
-                timeout=120
+                timeout= 600
             )
             response.raise_for_status()
 

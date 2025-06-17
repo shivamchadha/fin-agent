@@ -133,31 +133,28 @@ class FinanceInterface:
 
         if "financial_retriever" in decision.tools_needed:
             print("Retrieving financial documents...")
-            query = f"{company} {decision.modified_query}" if company else decision.modified_query
-            retrieved_docs = retrieve_context(query)
-            snippet = "\n".join(doc.page_content for doc in retrieved_docs)
-            self.context["finance"] += "\n\nAdditional Documents:\n" + snippet
-            print("Retrieved financial documents:", snippet)
+            retrieved_docs = retrieve_context(decision.financial_query)
+            self.context["finance"] += "\n\nAdditional Documents:\n" + retrieved_docs[:500]
+            print("Retrieved financial documents:")
 
         if "web_search" in decision.tools_needed:
             print("Performing web search for news...")
-            search_query = f"{company} " if company else ""
-            search_query += (decision.modified_query or message)
-            search_results = search_ddg(f"{search_query} financial updates")
+            search_query = (decision.search_query or message)
+            search_results = search_ddg(f"{search_query}",3)
 
             web_results = []
             for result in search_results:
-                # pdb.set_trace()  # Debugging line to inspect search results
+    
                 article = extract_article_text(result)
                 if article:
-                    excerpt = article["text"][:300].replace("\n", " ")
+                    excerpt = article["text"][:100].replace("\n", " ")
                     web_results.append(
-                        f"- {article['title']}\n  Source: {result['url']}\n  Excerpt: {excerpt}..."
+                        f"- {article['title']}\n  Source: {article['url']}\n  Excerpt: {excerpt}..."
                     )
             if web_results:
                 self.context["news"] += "\n\nWeb Results:\n" + "\n".join(web_results)
-            print("Web search results:", web_results)
-
+            print("Web search done:")
+            
         agent_out = self.agent.generate_response(
             user_message=message,
             company=company or "No company selected",

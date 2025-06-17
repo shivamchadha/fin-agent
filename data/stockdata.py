@@ -192,9 +192,9 @@ def fetch_data(company: str, start_date: str, end_date: str):
         plot = np.zeros((100, 100, 3), dtype=np.uint8)  # Placeholder image  
     raw_news = search_ddg_news(f"{company} financial news", max_results=5)
     news_text = "\n".join([
-        f"Title:{article['title']}\n url:({result['url']}): \n text:{article['text'][:500]}"
-        for result in raw_news if (article := extract_article_text(result))])
+                    f"Title:{article['title']}\n url:({article['url']}): \n text:{article['text'][:500]}"
+                        for article in (extract_article_text(result) for result in raw_news)])
     
-    news_summary = summarize_news(news_text)
+    news_summary = summarize_news(news_text,company)
 
     return stats, plot, news_summary if news_summary else "No recent news found", {"finance": financial_summary, "news": news_text}

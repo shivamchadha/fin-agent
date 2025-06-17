@@ -34,7 +34,6 @@ def extract_article_text(ddg_result):
     Enhanced extraction that:
     1. Uses DDG metadata as fallback
     2. Preserves all original fields
-    3. Handles WSL-specific cases
     Returns unified article format with source tracking
     """
     base_result = {
